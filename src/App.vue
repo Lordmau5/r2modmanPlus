@@ -64,6 +64,7 @@ import GenericProfileInstaller from './r2mm/installing/profile_installers/Generi
 import ConnectionProviderImpl from './r2mm/connection/ConnectionProviderImpl';
 import ConnectionProvider from './providers/generic/connection/ConnectionProvider';
 import UtilityMixin from './components/mixins/UtilityMixin.vue';
+import VuexProvider from './providers/ror2/system/VuexProvider';
 
 @Component
 export default class App extends mixins(UtilityMixin) {
@@ -138,6 +139,9 @@ export default class App extends mixins(UtilityMixin) {
         InteractionProvider.provide(() => new InteractionProviderImpl());
 
         PlatformInterceptorProvider.provide(() => new PlatformInterceptorImpl());
+
+        // For accessing the Vuex store outside of compenents (e.g. helper functions).
+        VuexProvider.provide(this.$store);
 
         BindLoaderImpl.bind();
     }
