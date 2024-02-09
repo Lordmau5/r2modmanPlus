@@ -3,7 +3,10 @@ import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
 import { ExpandableCard, Link } from '../../all';
 import DonateButton from '../../buttons/DonateButton.vue';
 import ManifestV2 from '../../../model/ManifestV2';
+import LoggerProvider, { LogSeverity } from '../../../providers/ror2/logging/LoggerProvider';
+import Dependants from '../../../r2mm/mods/Dependants';
 import ModBridge from '../../../r2mm/mods/ModBridge';
+import { disableModsFromActiveProfile } from '../../../utils/Profile';
 
 @Component({
     components: {
@@ -73,8 +76,23 @@ export default class LocalModCard extends Vue {
         );
     }
 
-    disableMod() {
-        this.$emit('disableMod', this.mod);
+    async disableMod() {
+        const dependants = Dependants.getDependantList(this.mod, this.$store.state.localModList);
+
+        for (const mod of dependants) {
+            if (mod.isEnabled()) {
+                this.$store.commit('openDisableModModal', this.mod);
+                return;
+            }
+        }
+
+        try {
+            await disableModsFromActiveProfile([this.mod]);
+        } catch (e) {
+            this.$emit('error', e);
+            const err: Error = e as Error;
+            LoggerProvider.instance.Log(LogSeverity.ACTION_STOPPED, `${err.name}\n-> ${err.message}`);
+        }
     }
 
     enableMod(mod: ManifestV2) {
